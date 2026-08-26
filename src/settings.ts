@@ -55,7 +55,7 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Apply shared hotkeys')
-      .setDesc('Merge shared hotkeys into this vault. Obsidian must be reloaded if the file changes.')
+      .setDesc('Merge shared hotkeys into this vault immediately.')
       .addButton((button) => button
         .setButtonText('Apply')
         .setCta()
@@ -65,7 +65,7 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
             if (!result.applied) {
               new Notice('Config Layer: configure a hotkeys folder first.');
             } else if (result.changed) {
-              new Notice('Config Layer applied shared hotkeys. Reload Obsidian to activate them.');
+              new Notice('Config Layer applied shared hotkeys.');
             } else {
               new Notice('Config Layer: shared hotkeys are already up to date.');
             }
@@ -77,7 +77,7 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Watch external files')
-      .setDesc('Reload enabled CSS automatically and re-apply hotkeys when source files change.')
+      .setDesc('Reload enabled CSS and re-apply hotkeys automatically when source files change.')
       .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.watchExternalFiles)
         .onChange(async (value) => {
