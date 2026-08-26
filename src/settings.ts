@@ -76,8 +76,44 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
+      .setName('Plugins folder')
+      .setDesc('Folder containing plugins.json. Only listed plugin IDs are required; all other installed plugins remain vault-specific and are never removed or disabled by Config Layer.')
+      .addText((text) => text
+        .setPlaceholder('~/dotfiles/obsidian')
+        .setValue(this.plugin.settings.pluginsFolder)
+        .onChange(async (value) => {
+          this.plugin.settings.pluginsFolder = value;
+          await this.plugin.saveSettings();
+          this.plugin.pluginsManager.restartWatcher();
+          try {
+            await this.plugin.pluginsManager.apply(true);
+          } catch (error) {
+            console.error('Config Layer: failed to apply required plugins', error);
+            new Notice('Config Layer could not apply required plugins. Check the developer console.');
+          }
+        }));
+
+    new Setting(containerEl)
+      .setName('Apply required plugins')
+      .setDesc('Install and enable only the plugin IDs listed in plugins.json. Existing vault-specific plugins are untouched.')
+      .addButton((button) => button
+        .setButtonText('Apply')
+        .setCta()
+        .onClick(async () => {
+          try {
+            const result = await this.plugin.pluginsManager.apply(true);
+            if (!result.applied) {
+              new Notice('Config Layer: configure a plugins folder first.');
+            }
+          } catch (error) {
+            console.error('Config Layer: failed to apply required plugins', error);
+            new Notice('Config Layer could not apply required plugins. Check the developer console.');
+          }
+        }));
+
+    new Setting(containerEl)
       .setName('Watch external files')
-      .setDesc('Reload enabled CSS and re-apply hotkeys automatically when source files change.')
+      .setDesc('Reload enabled CSS, re-apply hotkeys, and apply required plugins automatically when shared source files change.')
       .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.watchExternalFiles)
         .onChange(async (value) => {
