@@ -1,0 +1,10 @@
+{
+  "id": "config-layer",
+  "name": "Config Layer",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Load shared CSS and hotkeys from a configurable folder while preserving vault-specific settings.",
+  "author": "takashit16833",
+  "authorUrl": "https://github.com/takashit16833",
+  "isDesktopOnly": true
+}
