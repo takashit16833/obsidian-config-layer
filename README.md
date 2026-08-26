@@ -40,8 +40,9 @@ The rules are:
 
 - Commands that exist only in the vault remain vault-specific.
 - Commands present in shared `hotkeys.json` are managed by the shared layer and override the vault value.
-- If a previously shared command is removed from the shared file, Config Layer removes the previously applied value only when the vault value still matches the value Config Layer last applied.
-- If the vault value was changed independently after being applied, Config Layer preserves that changed value when the command leaves the shared layer.
+- When a command first becomes shared, Config Layer remembers the vault value that was underneath it, including the case where no vault value existed.
+- If a previously shared command is removed and the vault still contains the last shared value, Config Layer restores the remembered vault value, or removes the command if it originally did not exist.
+- If the vault value was changed independently while the shared layer was active, Config Layer preserves that changed value when the command leaves the shared layer.
 
 Obsidian does not expose a documented public API for reloading `hotkeys.json` into the running application. Config Layer therefore writes the merged file using documented/file-system behavior and asks you to reload Obsidian when hotkeys changed. It intentionally does not depend on undocumented internal hotkey APIs.
 
@@ -82,6 +83,7 @@ Use a dedicated test vault while developing Obsidian plugins. Do not test unfini
 
 ```bash
 npm install
+npm test
 npm run build
 ```
 
@@ -111,7 +113,8 @@ The first version intentionally focuses on:
 - shared CSS discovery and per-vault ON/OFF state;
 - live CSS reload from external files;
 - shared `hotkeys.json` merge with vault-specific hotkeys;
-- managed removal of hotkeys that leave the shared layer;
+- restoration of vault-specific hotkeys when a shared override is removed;
+- preservation of independent vault edits;
 - external file watching;
 - desktop Obsidian.
 
