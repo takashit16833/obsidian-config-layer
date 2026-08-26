@@ -4,7 +4,7 @@ import { promises as fs, watch, type FSWatcher } from 'node:fs';
 import path from 'node:path';
 import { getVaultHotkeysPath, resolveConfiguredPath } from './paths';
 import { mergeManagedHotkeys } from './merge-hotkeys';
-import type { ConfigLayerSettings, JsonObject } from './types';
+import type { ConfigLayerSettings, HotkeyBackups, JsonObject } from './types';
 
 export interface ApplyHotkeysResult {
   applied: boolean;
@@ -38,7 +38,7 @@ export class HotkeysManager {
   constructor(
     private readonly app: App,
     private readonly getSettings: () => ConfigLayerSettings,
-    private readonly updateManagedHotkeys: (managed: JsonObject) => Promise<void>,
+    private readonly updateManagedState: (managed: JsonObject, backups: HotkeyBackups) => Promise<void>,
   ) {}
 
   async apply(): Promise<ApplyHotkeysResult> {
@@ -52,13 +52,18 @@ export class HotkeysManager {
     const vaultPath = getVaultHotkeysPath(this.app);
     const sharedHotkeys = await readJsonObject(sharedPath, false);
     const vaultHotkeys = await readJsonObject(vaultPath, true);
-    const result = mergeManagedHotkeys(vaultHotkeys, settings.managedHotkeys, sharedHotkeys);
+    const result = mergeManagedHotkeys(
+      vaultHotkeys,
+      settings.managedHotkeys,
+      settings.hotkeyBackups,
+      sharedHotkeys,
+    );
 
     if (result.changed) {
       await fs.writeFile(vaultPath, `${JSON.stringify(result.merged, null, 2)}\n`, 'utf8');
     }
 
-    await this.updateManagedHotkeys(sharedHotkeys);
+    await this.updateManagedState(sharedHotkeys, result.backups);
     return { applied: true, changed: result.changed };
   }
 
@@ -106,7 +111,7 @@ export class HotkeysManager {
       void this.apply()
         .then((result) => {
           if (result.changed) {
-            new Notice('Config Layer updated shared hotkeys. Reload Obsidian to activate them.');
+            new Notice('Config Layer updated shared hotkeys. Reload Obsidian to activate them.', 8000);
           }
         })
         .catch((error) => {
