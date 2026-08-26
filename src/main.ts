@@ -2,7 +2,7 @@ import { Notice, Plugin } from 'obsidian';
 import { CssManager } from './css-manager';
 import { HotkeysManager } from './hotkeys-manager';
 import { ConfigLayerSettingTab } from './settings';
-import { DEFAULT_SETTINGS, type ConfigLayerSettings, type JsonObject } from './types';
+import { DEFAULT_SETTINGS, type ConfigLayerSettings, type HotkeyBackups, type JsonObject } from './types';
 
 export default class ConfigLayerPlugin extends Plugin {
   settings: ConfigLayerSettings = { ...DEFAULT_SETTINGS };
@@ -16,8 +16,9 @@ export default class ConfigLayerPlugin extends Plugin {
     this.hotkeysManager = new HotkeysManager(
       this.app,
       () => this.settings,
-      async (managed: JsonObject) => {
+      async (managed: JsonObject, backups: HotkeyBackups) => {
         this.settings.managedHotkeys = managed;
+        this.settings.hotkeyBackups = backups;
         await this.saveSettings();
       },
     );
@@ -57,6 +58,7 @@ export default class ConfigLayerPlugin extends Plugin {
       ...(loaded ?? {}),
       enabledCssFiles: { ...DEFAULT_SETTINGS.enabledCssFiles, ...(loaded?.enabledCssFiles ?? {}) },
       managedHotkeys: { ...DEFAULT_SETTINGS.managedHotkeys, ...(loaded?.managedHotkeys ?? {}) },
+      hotkeyBackups: { ...DEFAULT_SETTINGS.hotkeyBackups, ...(loaded?.hotkeyBackups ?? {}) },
     };
   }
 
