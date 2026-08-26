@@ -51,6 +51,7 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
           this.plugin.settings.hotkeysFolder = value;
           await this.plugin.saveSettings();
           this.plugin.hotkeysManager.restartWatcher();
+          this.plugin.pluginsManager.restartWatcher();
         }));
 
     new Setting(containerEl)
@@ -76,8 +77,41 @@ export class ConfigLayerSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
+      .setName('Plugins folder')
+      .setDesc('Folder containing plugins.json. Leave empty to use the Hotkeys folder.')
+      .addText((text) => text
+        .setPlaceholder('Use Hotkeys folder')
+        .setValue(this.plugin.settings.pluginsFolder)
+        .onChange(async (value) => {
+          this.plugin.settings.pluginsFolder = value;
+          await this.plugin.saveSettings();
+          this.plugin.pluginsManager.restartWatcher();
+        }));
+
+    new Setting(containerEl)
+      .setName('Apply required plugins')
+      .setDesc('Install missing plugins from plugins.json and enable required plugins. Other vault plugins are left untouched.')
+      .addButton((button) => button
+        .setButtonText('Apply')
+        .onClick(async () => {
+          try {
+            const result = await this.plugin.pluginsManager.apply();
+            if (!result.applied) {
+              new Notice('Config Layer: configure a plugins or hotkeys folder first.');
+            } else if (result.installed > 0 || result.enabled > 0) {
+              new Notice(`Config Layer applied required plugins: ${result.installed} installed, ${result.enabled} enabled.`);
+            } else {
+              new Notice('Config Layer: required plugins are already satisfied.');
+            }
+          } catch (error) {
+            console.error('Config Layer: failed to apply required plugins', error);
+            new Notice('Config Layer could not apply required plugins. Check the developer console.');
+          }
+        }));
+
+    new Setting(containerEl)
       .setName('Watch external files')
-      .setDesc('Reload enabled CSS and re-apply hotkeys automatically when source files change.')
+      .setDesc('Reload CSS, re-apply hotkeys, and apply required plugins automatically when source files change.')
       .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.watchExternalFiles)
         .onChange(async (value) => {

@@ -1,13 +1,13 @@
 {
   "name": "obsidian-config-layer",
   "version": "0.1.0",
-  "description": "Share CSS and hotkeys across Obsidian vaults from a configurable folder.",
+  "description": "Share CSS, hotkeys, and required community plugins across Obsidian vaults from configurable folders.",
   "main": "main.js",
   "type": "module",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "test": "node scripts/test-merge-hotkeys.mjs"
+    "test": "node scripts/test-merge-hotkeys.mjs && node scripts/test-plugin-list.mjs"
   },
   "keywords": [
     "obsidian",
