@@ -32,7 +32,7 @@ The plugin is the reader/applicator. It is not the source of truth for shared CS
 - When a command ID leaves the shared file and the current vault value still equals the last shared value, restore the recorded vault value. If the command did not originally exist, remove it.
 - If the user changed the vault value independently while the shared layer was active, preserve the user's value instead of restoring the backup.
 - For installations upgraded from a version that did not record backups, never guess the previous vault value. Preserve the current value when restoration cannot be proven safe.
-- Never use undocumented Obsidian internal hotkey APIs merely to avoid an application reload.
+- Do not use undocumented Obsidian internal hotkey APIs. Live activation currently comes from Obsidian observing changes to the vault `hotkeys.json`, verified in desktop runtime testing.
 
 ## Safety rules
 
@@ -120,7 +120,9 @@ Watchers are a convenience, not the correctness mechanism.
 - Watch callbacks should be debounced.
 - Watch errors must not crash the plugin.
 - Always close watchers on plugin unload and before replacing them.
-- Hotkey source changes may update the vault JSON automatically, but the UI must communicate that Obsidian reload is required for activation when applicable.
+- Hotkey source changes may update the vault JSON automatically.
+- In verified desktop runtime behavior, Obsidian notices the vault `hotkeys.json` change and activates the new shortcut immediately without reload.
+- Treat that live activation as observed Obsidian behavior, not as an undocumented API contract. Keep the implementation limited to file updates so a future Obsidian behavior change can be handled conservatively.
 
 ## Development workflow
 
