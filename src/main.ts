@@ -1,6 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
 import { CssManager } from './css-manager';
 import { HotkeysManager } from './hotkeys-manager';
+import { PluginsManager } from './plugins-manager';
 import { ConfigLayerSettingTab } from './settings';
 import { DEFAULT_SETTINGS, type ConfigLayerSettings, type HotkeyBackups, type JsonObject } from './types';
 
@@ -8,6 +9,7 @@ export default class ConfigLayerPlugin extends Plugin {
   settings: ConfigLayerSettings = { ...DEFAULT_SETTINGS };
   cssManager!: CssManager;
   hotkeysManager!: HotkeysManager;
+  pluginsManager!: PluginsManager;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -22,6 +24,7 @@ export default class ConfigLayerPlugin extends Plugin {
         await this.saveSettings();
       },
     );
+    this.pluginsManager = new PluginsManager(this.app, () => this.settings);
 
     this.addSettingTab(new ConfigLayerSettingTab(this.app, this));
 
@@ -34,18 +37,26 @@ export default class ConfigLayerPlugin extends Plugin {
     });
 
     await this.cssManager.refresh();
-    this.restartWatchers();
+
+    try {
+      await this.pluginsManager.apply();
+    } catch (error) {
+      console.error('Config Layer: failed to apply required plugins on startup', error);
+    }
 
     try {
       await this.hotkeysManager.apply();
     } catch (error) {
       console.error('Config Layer: failed to apply shared hotkeys on startup', error);
     }
+
+    this.restartWatchers();
   }
 
   onunload(): void {
     this.cssManager.stop();
     this.hotkeysManager.stop();
+    this.pluginsManager.stop();
   }
 
   async loadSettings(): Promise<void> {
@@ -66,14 +77,19 @@ export default class ConfigLayerPlugin extends Plugin {
   restartWatchers(): void {
     this.cssManager.restartWatcher();
     this.hotkeysManager.restartWatcher();
+    this.pluginsManager.restartWatcher();
   }
 
   private async refreshAll(showNotice: boolean): Promise<void> {
     try {
       await this.cssManager.refresh();
+      const pluginsResult = await this.pluginsManager.apply();
       await this.hotkeysManager.apply();
       if (showNotice) {
-        new Notice('Config Layer refreshed.');
+        const pluginSummary = pluginsResult.installed > 0 || pluginsResult.enabled > 0
+          ? ` ${pluginsResult.installed} plugin(s) installed, ${pluginsResult.enabled} enabled.`
+          : '';
+        new Notice(`Config Layer refreshed.${pluginSummary}`);
       }
     } catch (error) {
       console.error('Config Layer: refresh failed', error);
