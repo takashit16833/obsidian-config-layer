@@ -44,7 +44,9 @@ The rules are:
 - If a previously shared command is removed and the vault still contains the last shared value, Config Layer restores the remembered vault value, or removes the command if it originally did not exist.
 - If the vault value was changed independently while the shared layer was active, Config Layer preserves that changed value when the command leaves the shared layer.
 
-Obsidian does not expose a documented public API for reloading `hotkeys.json` into the running application. Config Layer therefore writes the merged file using documented/file-system behavior and asks you to reload Obsidian when hotkeys changed. It intentionally does not depend on undocumented internal hotkey APIs.
+With external file watching enabled, changes to shared `hotkeys.json` are applied automatically. In the tested desktop Obsidian environment, Obsidian picks up the resulting vault `hotkeys.json` change immediately, including the active keyboard shortcut, without an application reload.
+
+Config Layer does not call undocumented internal hotkey APIs. It only updates the vault configuration file and relies on Obsidian's own file-change handling.
 
 ## Example setup
 
@@ -115,6 +117,7 @@ The first version intentionally focuses on:
 - shared `hotkeys.json` merge with vault-specific hotkeys;
 - restoration of vault-specific hotkeys when a shared override is removed;
 - preservation of independent vault edits;
+- live hotkey updates through Obsidian's own `hotkeys.json` file-change handling;
 - external file watching;
 - desktop Obsidian.
 
@@ -123,4 +126,4 @@ Not currently in scope:
 - mobile support;
 - syncing files over a network;
 - Git operations inside the plugin;
-- undocumented Obsidian APIs for forcing hotkey reloads.
+- undocumented Obsidian APIs for hotkey manipulation.
