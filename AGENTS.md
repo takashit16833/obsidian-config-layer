@@ -26,10 +26,12 @@ The plugin is the reader/applicator. It is not the source of truth for shared CS
 - The folder may be inside or outside the current vault.
 - The shared file is authoritative only for command IDs it currently contains.
 - Vault-only command IDs remain untouched.
-- When the same command ID exists in both places, the shared value wins.
-- Track the last shared values applied by the plugin.
-- When a command ID is removed from the shared file, remove it from the vault only if the current vault value still equals the last value applied by Config Layer.
-- If the user changed that vault value independently, preserve it.
+- When the same command ID exists in both places, the shared value wins while that command remains shared.
+- When a command first enters shared management, record the vault value that existed underneath it, including explicit absence.
+- Keep that original backup unchanged while the shared command remains managed, even if the shared value changes.
+- When a command ID leaves the shared file and the current vault value still equals the last shared value, restore the recorded vault value. If the command did not originally exist, remove it.
+- If the user changed the vault value independently while the shared layer was active, preserve the user's value instead of restoring the backup.
+- For installations upgraded from a version that did not record backups, never guess the previous vault value. Preserve the current value when restoration cannot be proven safe.
 - Never use undocumented Obsidian internal hotkey APIs merely to avoid an application reload.
 
 ## Safety rules
@@ -40,7 +42,7 @@ This plugin reads and writes configuration files, so conservative behavior matte
 - Parse and validate shared `hotkeys.json` before modifying the vault file.
 - If shared JSON is invalid, fail without changing the vault file or managed-hotkey state.
 - Avoid changing unrelated keys or reformatting unrelated files unnecessarily.
-- Do not delete a vault hotkey solely because it disappeared from the shared file; first prove it still matches the last managed value.
+- Never discard a vault-specific hotkey merely because a shared command disappears. Restore or remove only when the plugin can prove the current value is still the value it last managed.
 - Prefer documented Obsidian APIs. If an API or behavior is uncertain, verify it against current official Obsidian developer documentation or source/types before changing implementation.
 - Do not add dependence on undocumented internal APIs without an explicit design decision and documented reason.
 - Do not hardcode `.obsidian`; use `app.vault.configDir`.
@@ -90,7 +92,7 @@ src/hotkeys-manager.ts
   JSON I/O, application, watching
 
 src/merge-hotkeys.ts
-  pure hotkey merge semantics
+  pure hotkey merge and restoration semantics
 
 src/types.ts
   persistent settings and shared types
@@ -105,7 +107,8 @@ Per-vault plugin data contains local behavior only, such as:
 - configured source paths;
 - enabled CSS file names;
 - whether external files are watched;
-- the last shared hotkey values applied by Config Layer.
+- the last shared hotkey values applied by Config Layer;
+- the original vault values shadowed by currently managed shared hotkeys.
 
 Do not store the shared CSS contents or treat plugin `data.json` as the shared source of truth.
 
@@ -127,7 +130,7 @@ Before implementing behavior that depends on Obsidian details:
 2. check the current official Obsidian developer documentation or API types when the behavior may have changed;
 3. distinguish documented API from internal implementation;
 4. make the smallest change that satisfies the contract;
-5. run `npm run build` before committing.
+5. run `npm test` and `npm run build` before committing.
 
 For bugs that depend on the user's environment, prefer observation over guessing. Ask for a short read-only diagnostic or console output when local state is required to distinguish hypotheses.
 
