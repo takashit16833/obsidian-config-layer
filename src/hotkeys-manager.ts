@@ -108,16 +108,10 @@ export class HotkeysManager {
     }
     this.applyTimer = setTimeout(() => {
       this.applyTimer = null;
-      void this.apply()
-        .then((result) => {
-          if (result.changed) {
-            new Notice('Config Layer updated shared hotkeys. Reload Obsidian to activate them.');
-          }
-        })
-        .catch((error) => {
-          console.error('Config Layer: failed to apply shared hotkeys', error);
-          new Notice('Config Layer could not apply shared hotkeys. Check the developer console.');
-        });
+      void this.apply().catch((error) => {
+        console.error('Config Layer: failed to apply shared hotkeys', error);
+        new Notice('Config Layer could not apply shared hotkeys. Check the developer console.');
+      });
     }, 150);
   }
 
