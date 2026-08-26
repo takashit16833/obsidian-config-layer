@@ -6,7 +6,7 @@ Config Layer lets multiple Obsidian vaults consume a shared configuration layer 
 
 The primary use case is a Git-managed shared configuration directory, such as `~/dotfiles/obsidian`, that can be edited by humans or coding agents independently of individual vaults.
 
-The plugin is the reader/applicator. It is not the source of truth for shared CSS or hotkeys.
+The plugin is the reader/applicator. It is not the source of truth for shared CSS, hotkeys, or the required community-plugin list.
 
 ## Core contract
 
@@ -34,17 +34,38 @@ The plugin is the reader/applicator. It is not the source of truth for shared CS
 - For installations upgraded from a version that did not record backups, never guess the previous vault value. Preserve the current value when restoration cannot be proven safe.
 - Do not use undocumented Obsidian internal hotkey APIs. Live activation currently comes from Obsidian observing changes to the vault `hotkeys.json`, verified in desktop runtime testing.
 
+### Required community plugins
+
+- The user may configure a folder containing `plugins.json`.
+- If the plugins folder is empty, use the hotkeys folder so an existing `~/dotfiles/obsidian` setup needs no additional per-vault path.
+- `plugins.json` is a JSON array of community plugin IDs.
+- Treat that array as a minimum required set, not as a complete synchronized plugin inventory.
+- Validate the entire file before installing or enabling anything.
+- Missing required plugins may be installed only when they are present in the official Obsidian community plugin registry.
+- Installed but disabled required plugins may be enabled.
+- Already installed and enabled required plugins remain untouched.
+- Plugins not present in the shared list remain vault-specific and must not be disabled, removed, or modified.
+- Removing an ID from `plugins.json` must not disable or uninstall the plugin.
+- Do not automatically upgrade an already installed plugin.
+- Do not synchronize plugin settings unless that feature is explicitly designed later.
+- Ignore `config-layer` if it appears in the list; the plugin cannot bootstrap itself.
+
+Obsidian's public Plugin API types do not expose community-plugin installation and enablement. Required-plugin installation is therefore an explicit exception to the general preference for documented APIs. Keep all access to the internal `app.plugins` interface narrowly typed and isolated in `src/plugins-manager.ts`. If the internal interface is unavailable, fail safely and do not fall back to destructive file manipulation or shell commands.
+
 ## Safety rules
 
-This plugin reads and writes configuration files, so conservative behavior matters more than convenience.
+This plugin reads and writes configuration files and can install executable third-party plugin code, so conservative behavior matters more than convenience.
 
 - Do not write to a vault during discovery or validation.
 - Parse and validate shared `hotkeys.json` before modifying the vault file.
-- If shared JSON is invalid, fail without changing the vault file or managed-hotkey state.
+- If shared hotkey JSON is invalid, fail without changing the vault file or managed-hotkey state.
+- Parse and validate all of `plugins.json` before installing or enabling plugins.
+- Do not install an ID that is absent from the official Obsidian community plugin registry.
+- Never uninstall, disable, or auto-upgrade plugins as a consequence of the shared required-plugin list.
 - Avoid changing unrelated keys or reformatting unrelated files unnecessarily.
 - Never discard a vault-specific hotkey merely because a shared command disappears. Restore or remove only when the plugin can prove the current value is still the value it last managed.
 - Prefer documented Obsidian APIs. If an API or behavior is uncertain, verify it against current official Obsidian developer documentation or source/types before changing implementation.
-- Do not add dependence on undocumented internal APIs without an explicit design decision and documented reason.
+- Do not add further dependence on undocumented internal APIs without an explicit design decision and documented reason.
 - Do not hardcode `.obsidian`; use `app.vault.configDir`.
 - Keep `FileSystemAdapter` use guarded by `instanceof`, even though the manifest is desktop-only.
 - Treat paths supplied by users as paths, not shell fragments. Do not invoke a shell to read or apply configuration.
@@ -69,7 +90,7 @@ Configured paths support:
 2. `~/...`, expanded to the current user's home directory;
 3. relative paths, resolved from the current vault root.
 
-Keep path resolution in one module so CSS and hotkeys cannot drift into different semantics.
+Keep path resolution in one module so CSS, hotkeys, and plugins cannot drift into different semantics.
 
 ## Architecture
 
@@ -94,11 +115,18 @@ src/hotkeys-manager.ts
 src/merge-hotkeys.ts
   pure hotkey merge and restoration semantics
 
+src/plugin-list.ts
+  pure plugins.json validation and normalization
+
+src/plugins-manager.ts
+  required-plugin discovery, installation, enablement, watching
+  isolated access to Obsidian's internal plugin-management interface
+
 src/types.ts
   persistent settings and shared types
 ```
 
-Prefer keeping merge policy pure and independent from Obsidian and filesystem APIs so it can be tested in isolation.
+Prefer keeping merge and validation policy pure and independent from Obsidian and filesystem APIs so it can be tested in isolation.
 
 ## Persistent plugin data
 
@@ -110,7 +138,7 @@ Per-vault plugin data contains local behavior only, such as:
 - the last shared hotkey values applied by Config Layer;
 - the original vault values shadowed by currently managed shared hotkeys.
 
-Do not store the shared CSS contents or treat plugin `data.json` as the shared source of truth.
+Do not store shared CSS contents, hotkey contents, or the shared plugin list in plugin `data.json` as a source of truth.
 
 ## External watching
 
@@ -121,8 +149,9 @@ Watchers are a convenience, not the correctness mechanism.
 - Watch errors must not crash the plugin.
 - Always close watchers on plugin unload and before replacing them.
 - Hotkey source changes may update the vault JSON automatically.
+- `plugins.json` source changes may install missing required plugins and enable disabled required plugins automatically.
 - In verified desktop runtime behavior, Obsidian notices the vault `hotkeys.json` change and activates the new shortcut immediately without reload.
-- Treat that live activation as observed Obsidian behavior, not as an undocumented API contract. Keep the implementation limited to file updates so a future Obsidian behavior change can be handled conservatively.
+- Treat hotkey live activation as observed Obsidian behavior, not as an undocumented API contract.
 
 ## Development workflow
 
@@ -132,9 +161,11 @@ Before implementing behavior that depends on Obsidian details:
 2. check the current official Obsidian developer documentation or API types when the behavior may have changed;
 3. distinguish documented API from internal implementation;
 4. make the smallest change that satisfies the contract;
-5. run `npm test` and `npm run build` before committing.
+5. run `npm test` and `npm run build` before committing or merging.
 
 For bugs that depend on the user's environment, prefer observation over guessing. Ask for a short read-only diagnostic or console output when local state is required to distinguish hypotheses.
+
+Required-plugin behavior must additionally be tested in a disposable Obsidian vault before being treated as runtime-verified, because successful TypeScript compilation cannot prove the current internal `app.plugins` behavior.
 
 ## Scope discipline
 
@@ -144,10 +175,12 @@ Out of scope unless explicitly requested:
 
 - Git pull/push;
 - cloud synchronization;
-- plugin installation synchronization;
 - theme synchronization;
 - arbitrary `.obsidian` file mirroring;
-- mobile file-provider integration.
+- mobile file-provider integration;
+- plugin settings synchronization;
+- automatic plugin upgrades;
+- disabling or uninstalling plugins because they disappeared from `plugins.json`.
 
 The plugin should remain a small adapter between a shared local configuration directory and Obsidian vaults.
 
