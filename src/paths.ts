@@ -32,3 +32,7 @@ export function resolveConfiguredPath(app: App, configuredPath: string): string 
 export function getVaultHotkeysPath(app: App): string {
   return path.join(getVaultBasePath(app), app.vault.configDir, 'hotkeys.json');
 }
+
+export function getVaultPluginsPath(app: App): string {
+  return path.join(getVaultBasePath(app), app.vault.configDir, 'plugins');
+}
