@@ -37,10 +37,7 @@ export default class ConfigLayerPlugin extends Plugin {
     this.restartWatchers();
 
     try {
-      const result = await this.hotkeysManager.apply();
-      if (result.changed) {
-        new Notice('Config Layer applied shared hotkeys. Reload Obsidian to activate them.');
-      }
+      await this.hotkeysManager.apply();
     } catch (error) {
       console.error('Config Layer: failed to apply shared hotkeys on startup', error);
     }
@@ -74,11 +71,9 @@ export default class ConfigLayerPlugin extends Plugin {
   private async refreshAll(showNotice: boolean): Promise<void> {
     try {
       await this.cssManager.refresh();
-      const result = await this.hotkeysManager.apply();
+      await this.hotkeysManager.apply();
       if (showNotice) {
-        new Notice(result.changed
-          ? 'Config Layer refreshed. Reload Obsidian to activate updated hotkeys.'
-          : 'Config Layer refreshed.');
+        new Notice('Config Layer refreshed.');
       }
     } catch (error) {
       console.error('Config Layer: refresh failed', error);
