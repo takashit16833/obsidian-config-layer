@@ -111,7 +111,7 @@ export class HotkeysManager {
       void this.apply()
         .then((result) => {
           if (result.changed) {
-            new Notice('Config Layer updated shared hotkeys. Reload Obsidian to activate them.', 8000);
+            new Notice('Config Layer updated shared hotkeys. Reload Obsidian to activate them.');
           }
         })
         .catch((error) => {
