@@ -3,7 +3,34 @@
 複数の Obsidian Vault で CSS・ホットキー・コミュニティプラグインを共通化するためのプラグイン。
 デスクトップ版 Obsidian で使用する。
 
-## 1. 共通設定を用意する
+## 1. インストール
+
+本体をホームディレクトリに置いてビルドする。
+
+```bash
+git clone https://github.com/takashit16833/obsidian-config-layer.git ~/obsidian-config-layer
+cd ~/obsidian-config-layer
+npm install
+npm run build
+```
+
+各 Vault から `main.js` と `manifest.json` をシンボリックリンクで参照する。
+`VAULT` は実際の Vault のパスに置き換える。
+
+```bash
+VAULT="/path/to/Vault"
+PLUGIN="$VAULT/.obsidian/plugins/config-layer"
+
+mkdir -p "$PLUGIN"
+ln -s "$HOME/obsidian-config-layer/main.js" "$PLUGIN/main.js"
+ln -s "$HOME/obsidian-config-layer/manifest.json" "$PLUGIN/manifest.json"
+```
+
+フォルダ全体はリンクしない。Vault ごとの設定（`data.json`）を独立して保持するため。
+
+Obsidian を再起動し、「設定 → コミュニティプラグイン」で Config Layer を有効化する。
+
+## 2. 共通設定を用意する
 
 共通設定は `~/dotfiles/obsidian/` に置く。
 
@@ -29,7 +56,7 @@
 ]
 ```
 
-## 2. Vault ごとに設定する
+## 3. Vault ごとに設定する
 
 Obsidian の「設定 → Config Layer」で次のように指定する。
 
@@ -46,7 +73,7 @@ Obsidian の「設定 → Config Layer」で次のように指定する。
 2. **Apply shared hotkeys** の **Apply** を押す。
 3. `plugins.json` を使う場合は **Apply required plugins** の **Apply** を押す。
 
-## 3. 普段の使い方
+## 4. 普段の使い方
 
 共通ファイルを編集すれば、**Watch external files** が ON の場合は自動で反映される。
 
