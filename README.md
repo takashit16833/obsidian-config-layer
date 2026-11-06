@@ -5,11 +5,12 @@
 
 ## 1. インストール
 
-本体をホームディレクトリに置いてビルドする。
+本体を `~/workspace` に置いてビルドする。
 
 ```bash
-git clone https://github.com/takashit16833/obsidian-config-layer.git ~/obsidian-config-layer
-cd ~/obsidian-config-layer
+mkdir -p ~/workspace
+git clone https://github.com/takashit16833/obsidian-config-layer.git ~/workspace/obsidian-config-layer
+cd ~/workspace/obsidian-config-layer
 npm install
 npm run build
 ```
@@ -22,8 +23,8 @@ VAULT="/path/to/Vault"
 PLUGIN="$VAULT/.obsidian/plugins/config-layer"
 
 mkdir -p "$PLUGIN"
-ln -s "$HOME/obsidian-config-layer/main.js" "$PLUGIN/main.js"
-ln -s "$HOME/obsidian-config-layer/manifest.json" "$PLUGIN/manifest.json"
+ln -s "$HOME/workspace/obsidian-config-layer/main.js" "$PLUGIN/main.js"
+ln -s "$HOME/workspace/obsidian-config-layer/manifest.json" "$PLUGIN/manifest.json"
 ```
 
 フォルダ全体はリンクしない。Vault ごとの設定（`data.json`）を独立して保持するため。
