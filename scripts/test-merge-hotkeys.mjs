@@ -17,7 +17,24 @@ try {
     outfile,
   });
 
-  const { mergeManagedHotkeys } = await import(`${pathToFileURL(outfile).href}?t=${Date.now()}`);
+  const { mergeManagedHotkeys, mergeSharedHotkeySources } = await import(`${pathToFileURL(outfile).href}?t=${Date.now()}`);
+
+  const common = {
+    'app:toggle-left-sidebar': [{ modifiers: ['Mod'], key: 'B' }],
+    'editor:toggle-bold': [{ modifiers: ['Ctrl'], key: 'B' }],
+  };
+  const windows = mergeSharedHotkeySources(common, {
+    'app:toggle-left-sidebar': [{ modifiers: ['Alt'], key: 'B' }],
+  });
+  assert.deepEqual(windows['app:toggle-left-sidebar'], [{ modifiers: ['Alt'], key: 'B' }]);
+  assert.deepEqual(windows['editor:toggle-bold'], common['editor:toggle-bold']);
+  assert.deepEqual(common['app:toggle-left-sidebar'], [{ modifiers: ['Mod'], key: 'B' }]);
+  assert.deepEqual(mergeSharedHotkeySources(common, {}), common);
+
+  const windowsApplied = mergeManagedHotkeys({}, {}, {}, windows);
+  assert.deepEqual(windowsApplied.merged, windows);
+  const platformRemoved = mergeManagedHotkeys(windowsApplied.merged, windows, windowsApplied.backups, common);
+  assert.deepEqual(platformRemoved.merged, common);
 
   const vault = { local: 'X', shared: 'Q' };
   const sharedY = { shared: 'Y' };
