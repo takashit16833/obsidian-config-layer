@@ -3,7 +3,7 @@ import { Notice } from 'obsidian';
 import { promises as fs, watch, type FSWatcher } from 'node:fs';
 import path from 'node:path';
 import { getVaultHotkeysPath, resolveConfiguredPath } from './paths';
-import { mergeManagedHotkeys } from './merge-hotkeys';
+import { mergeManagedHotkeys, mergeSharedHotkeySources } from './merge-hotkeys';
 import type { ConfigLayerSettings, HotkeyBackups, JsonObject } from './types';
 
 export interface ApplyHotkeysResult {
@@ -49,8 +49,11 @@ export class HotkeysManager {
     }
 
     const sharedPath = path.join(folder, 'hotkeys.json');
+    const platformPath = path.join(folder, `hotkeys.${process.platform}.json`);
     const vaultPath = getVaultHotkeysPath(this.app);
-    const sharedHotkeys = await readJsonObject(sharedPath, false);
+    const commonHotkeys = await readJsonObject(sharedPath, false);
+    const platformHotkeys = await readJsonObject(platformPath, true);
+    const sharedHotkeys = mergeSharedHotkeySources(commonHotkeys, platformHotkeys);
     const vaultHotkeys = await readJsonObject(vaultPath, true);
     const result = mergeManagedHotkeys(
       vaultHotkeys,
@@ -81,7 +84,8 @@ export class HotkeysManager {
 
     try {
       this.watcher = watch(folder, (_eventType, filename) => {
-        if (filename === null || filename.toString() === 'hotkeys.json') {
+        if (filename === null || filename.toString() === 'hotkeys.json'
+          || filename.toString() === `hotkeys.${process.platform}.json`) {
           this.scheduleApply();
         }
       });
