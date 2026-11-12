@@ -14,6 +14,11 @@ function captureBackup(vaultHotkeys: JsonObject, commandId: string): HotkeyBacku
     : { kind: 'missing' };
 }
 
+// Platform-specific entries take precedence; unrelated shared commands remain intact.
+export function mergeSharedHotkeySources(common: JsonObject, platform: JsonObject): JsonObject {
+  return { ...common, ...platform };
+}
+
 export interface MergeHotkeysResult {
   merged: JsonObject;
   backups: HotkeyBackups;
