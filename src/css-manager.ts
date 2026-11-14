@@ -2,6 +2,7 @@ import type { App } from 'obsidian';
 import { promises as fs, watch, type FSWatcher } from 'node:fs';
 import path from 'node:path';
 import { resolveConfiguredPath } from './paths';
+import { inlineLocalImageUrls } from './css-local-images';
 import type { ConfigLayerSettings } from './types';
 
 export class CssManager {
@@ -58,7 +59,7 @@ export class CssManager {
           document.head.appendChild(element);
           this.styleElements.set(file, element);
         }
-        element.textContent = css;
+        element.textContent = await inlineLocalImageUrls(css);
       } catch (error) {
         console.error(`Config Layer: failed to load CSS file ${file}`, error);
       }

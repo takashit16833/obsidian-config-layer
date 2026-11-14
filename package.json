@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "test": "node scripts/test-merge-hotkeys.mjs && node scripts/test-plugin-list.mjs"
+    "test": "node scripts/test-merge-hotkeys.mjs && node scripts/test-plugin-list.mjs && node scripts/test-css-local-images.mjs"
   },
   "keywords": [
     "obsidian",

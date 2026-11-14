@@ -74,6 +74,20 @@ Obsidian の「設定 → Config Layer」で次のように指定する。
 2. **Apply shared hotkeys** の **Apply** を押す。
 3. `plugins.json` を使う場合は **Apply required plugins** の **Apply** を押す。
 
+### ローカル画像を CSS で使う
+
+共通 CSS からホームディレクトリ内の画像を参照する場合は、次のように書く。
+
+```css
+:root {
+  --rhb-wallpaper-image: url("~/Pictures/wallpaper.jpg");
+}
+```
+
+Config Layer が `~/` を実際のホームディレクトリに展開し、画像を CSS に埋め込んで表示する。PNG、JPEG、GIF、WebP、AVIF、SVG、BMP、ICO に対応。従来の HTTP(S) URL はそのまま使える。
+
+CSS を変更した場合は従来どおり自動反映される。**画像ファイル自体を変更した場合**は、コマンドパレットの **Config Layer: Refresh shared configuration** を実行して再読み込みする。画像が見つからない場合や未対応形式の場合は画像を表示せず、開発者コンソールへ警告を出す。
+
 ## 4. 普段の使い方
 
 共通ファイルを編集すれば、**Watch external files** が ON の場合は自動で反映される。
