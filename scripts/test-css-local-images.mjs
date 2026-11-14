@@ -32,15 +32,15 @@ try {
     '.c { background: url("https://example.com/image.png"); }',
     '.d { background: url("data:image/png;base64,AA=="); }',
     '.e { background: url("./other.jpg"); }',
-  ].join('\\n');
+  ].join('\n');
 
   const result = await inlineLocalImageUrls(css, dir);
-  assert.match(result, /url\\("data:image\\/png;base64,iVBORw=="\\)/);
-  assert.equal(result.match(/url\\("data:image\\/jpeg;base64,\\/9j\\/"\\)/g)?.length, 2);
-  assert.match(result, /\\/\\* url\\("~\\/Pictures\\/ignored.png"\\) \\*\\//);
-  assert.match(result, /url\\("https:\\/\\/example.com\\/image.png"\\)/);
-  assert.match(result, /url\\("data:image\\/png;base64,AA=="\\)/);
-  assert.match(result, /url\\("\\.\\/other.jpg"\\)/);
+  assert.match(result, /url\("data:image\/png;base64,iVBORw=="\)/);
+  assert.equal(result.match(/url\("data:image\/jpeg;base64,\/9j\/"\)/g)?.length, 2);
+  assert.match(result, /\/\* url\("~\/Pictures\/ignored.png"\) \*\//);
+  assert.match(result, /url\("https:\/\/example.com\/image.png"\)/);
+  assert.match(result, /url\("data:image\/png;base64,AA=="\)/);
+  assert.match(result, /url\("\.\/other.jpg"\)/);
 
   const warnings = [];
   const oldWarn = console.warn;
